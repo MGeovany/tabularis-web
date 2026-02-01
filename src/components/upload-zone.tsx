@@ -73,7 +73,7 @@ export function UploadZone() {
       <div className="z-[2] mb-2 mb-8 max-w-[400px] text-center font-mono">
         <span className="font-dela mb-[var(--space-sm)] block text-6xl">⬇</span>
         <h1 className="font-dela mb-[var(--space-xs)] text-2xl uppercase">{t("upload.title")}</h1>
-        <p className="mb-[var(--space-md)] text-[0.9rem] leading-[1.5]">
+        <p className="mb-[var(--space-md)] text-xl leading-[1.5]">
           {t("upload.subtitle1")}
           <br />
           {t("upload.subtitle2")}

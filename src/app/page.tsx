@@ -1,20 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { LandingHeader, LandingHero, LandingFeatures, LandingFooter } from "@/components/landing";
 
 export default function LandingPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (loading) return;
-    if (user) {
-      router.replace("/dashboard");
-    }
-  }, [user, loading, router]);
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -22,10 +12,6 @@ export default function LandingPage() {
         <p className="text-ink text-sm font-bold uppercase">Loading...</p>
       </div>
     );
-  }
-
-  if (user) {
-    return null;
   }
 
   return (

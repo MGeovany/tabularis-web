@@ -27,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${delaGothic.variable} ${spaceMono.variable} font-mono antialiased`}>
+      <body
+        className={`${delaGothic.variable} ${spaceMono.variable} bg-paper font-mono antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -123,12 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, [supabase]);
 
+  const accessToken = state.session?.access_token ?? null;
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && accessToken) {
+      console.log("[Tabularis] JWT (access_token):", accessToken);
+    }
+  }, [accessToken]);
+
   const value: AuthContextValue = {
     ...state,
     signInWithMicrosoft,
     signOut,
     refreshApiUser,
-    accessToken: state.session?.access_token ?? null,
+    accessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

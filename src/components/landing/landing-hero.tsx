@@ -1,16 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/button";
+import { useAuth } from "@/contexts/auth-context";
 
 export function LandingHero() {
+  const { user } = useAuth();
+  const getStartedHref = user ? "/dashboard" : "/login";
   return (
-    <section className="grid min-h-[60vh] grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]">
+    <section className="min-h-[60vh]">
       <div className="relative flex flex-col justify-between p-6">
         <div className="absolute inset-0 [background-image:radial-gradient(var(--ink)_20%,transparent_20%)] [background-size:6px_6px] [background-position:0_0] opacity-15" />
         <div className="relative z-10">
           <div className="border-ink mb-8 border-b pb-2 text-xs font-bold uppercase">
-            <span className="mr-4">PDF → Excel</span>
-            <span className="mr-4">Encrypted</span>
-            <span>Audit-ready</span>
+            <span className="mr-2">PDF → Excel</span>
+            <span className="mr-2">• Encrypted</span>
+            <span>• Audit-ready</span>
           </div>
 
           <h1 className="font-dela text-4xl leading-tight font-black tracking-tight uppercase md:text-5xl lg:text-6xl">
@@ -21,12 +26,12 @@ export function LandingHero() {
             your documents.
           </h1>
 
-          <p className="mt-6 max-w-[85%] text-base leading-relaxed">
+          <p className="mt-6 max-w-[85%] text-2xl leading-relaxed">
             From sizing charts to production specs—encrypted and audit-ready.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/login">
+            <Link href={getStartedHref}>
               <Button>Get started</Button>
             </Link>
             <Link
@@ -37,14 +42,9 @@ export function LandingHero() {
             </Link>
           </div>
         </div>
-
-        <div className="font-dela relative z-10 mt-6 text-sm font-bold uppercase">
-          <span className="mr-6">PDF</span>
-          <span>XLS</span>
-        </div>
       </div>
 
-      <div className="relative flex min-h-[400px] flex-col lg:min-h-0">
+      {/*     <div className="relative flex min-h-[400px] flex-col lg:min-h-0">
         <div className="font-dela absolute top-4 left-4 z-10 text-sm font-bold uppercase">
           Secure
         </div>
@@ -58,7 +58,7 @@ export function LandingHero() {
         <div className="font-dela absolute right-4 bottom-4 z-10 text-xs font-bold uppercase">
           Encrypted
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }
