@@ -27,6 +27,7 @@ export const translations = {
       plan: "PLAN",
       free: "FREE",
       freeTrial: "Free",
+      askSupport: "Ask support",
     },
     upload: {
       title: "Drag your PDF",
@@ -167,6 +168,7 @@ export const translations = {
       plan: "PLAN",
       free: "GRATUITO",
       freeTrial: "Gratis",
+      askSupport: "Pedir soporte",
     },
     upload: {
       title: "Arrastra tu PDF",

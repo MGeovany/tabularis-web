@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type ConvertPagesModalProps = {
   open: boolean;
@@ -10,6 +10,8 @@ type ConvertPagesModalProps = {
   filename: string;
   totalPages: number;
   canConvertAll: boolean;
+  /** When true, user is on Pro plan: show Pro features (Convert All, no upgrade prompt) */
+  isProUser?: boolean;
   maxSelectPages: number;
   freeMaxPages: number;
   labels: {
@@ -84,6 +86,7 @@ export function ConvertPagesModal(props: ConvertPagesModalProps) {
     filename,
     totalPages,
     canConvertAll,
+    isProUser = false,
     maxSelectPages,
     freeMaxPages,
     labels,
@@ -92,7 +95,8 @@ export function ConvertPagesModal(props: ConvertPagesModalProps) {
     onConfirm,
   } = props;
 
-  const defaultMode: "all" | "selected" = canConvertAll ? "all" : "selected";
+  const hasProFeatures = canConvertAll || isProUser;
+  const defaultMode: "all" | "selected" = hasProFeatures ? "all" : "selected";
   const [mode, setMode] = useState<"all" | "selected">(defaultMode);
   const [pagesSpec, setPagesSpec] = useState(() =>
     canConvertAll ? "" : `1-${Math.min(freeMaxPages, totalPages)}`,
@@ -140,7 +144,9 @@ export function ConvertPagesModal(props: ConvertPagesModalProps) {
           <div className="border-ink bg-paper flex min-h-0 flex-1 flex-col border-x-0 border-t-0 border-b-0 p-5 md:p-10">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="font-dela text-2xl uppercase md:text-3xl">{title}</div>
+                <DialogTitle className="font-dela text-2xl uppercase md:text-3xl">
+                  {title}
+                </DialogTitle>
                 <div
                   className="mt-2 truncate text-xs font-bold uppercase opacity-70 md:text-sm"
                   title={filename}
@@ -162,7 +168,7 @@ export function ConvertPagesModal(props: ConvertPagesModalProps) {
 
             <div className="border-ink mt-6 grid gap-4 border-t-[3px] pt-6">
               <div className="flex flex-wrap items-center gap-3">
-                {canConvertAll ? (
+                {hasProFeatures ? (
                   <button
                     type="button"
                     onClick={() => setMode("all")}
@@ -206,7 +212,7 @@ export function ConvertPagesModal(props: ConvertPagesModalProps) {
                   {labels.convertSelected}
                 </button>
 
-                {!canConvertAll && (
+                {!hasProFeatures && (
                   <button
                     type="button"
                     onClick={onUpgrade}

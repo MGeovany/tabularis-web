@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "./button";
@@ -26,6 +27,7 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
   const limit = apiUser?.conversions_limit ?? 0;
   const used = apiUser?.conversions_used ?? 0;
   const limitReached = limit > 0 && used >= limit;
+  const isPro = (apiUser?.plan || "FREE").toUpperCase() === "PRO";
 
   const formatTimeLeft = (resetAtIso: string | undefined) => {
     if (!resetAtIso) return "";
@@ -44,6 +46,16 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
   const fmt = (template: string, vars: Record<string, string | number>) =>
     template.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
 
+  const convertAndDownload = async (token: string, file: File, pages?: string) => {
+    const { blob, filename } = await convertPdfToExcel(token, file, pages);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const processFile = useCallback(
     async (file: File) => {
       setError(null);
@@ -60,6 +72,7 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
         setError(fmt(t("upload.limitReached"), { time: time || "" }));
         return;
       }
+
       setConverting(true);
       try {
         const info = await inspectPdf(accessToken, file);
@@ -92,7 +105,70 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
         setConverting(false);
       }
     },
-    [accessToken, t, limitReached, apiUser?.reset_at],
+    [accessToken, apiUser?.reset_at, fmt, limitReached, t],
+  );
+
+  const processFiles = useCallback(
+    async (files: File[]) => {
+      setError(null);
+      if (!accessToken) {
+        setError(t("upload.signInRequired"));
+        return;
+      }
+      if (limitReached) {
+        const time = formatTimeLeft(apiUser?.reset_at);
+        setError(fmt(t("upload.limitReached"), { time: time || "" }));
+        return;
+      }
+
+      const pdfs = files.filter(isPdfFile);
+      if (pdfs.length === 0) {
+        setError(t("upload.onlyPdf"));
+        return;
+      }
+
+      if (!isPro) {
+        // Free: single-file flow.
+        await processFile(pdfs[0]);
+        return;
+      }
+
+      if (pdfs.length === 1) {
+        await processFile(pdfs[0]);
+        return;
+      }
+
+      // Pro bulk conversion: convert all pages for each PDF.
+      setConverting(true);
+      const total = pdfs.length;
+      toast.message(`Starting bulk conversion (${total})`);
+      let ok = 0;
+      for (let i = 0; i < pdfs.length; i++) {
+        const f = pdfs[i];
+        try {
+          toast.message(`Converting ${i + 1}/${total}: ${f.name}`);
+          await convertAndDownload(accessToken, f);
+          ok += 1;
+        } catch {
+          toast.error(`Failed: ${f.name}`);
+        }
+      }
+      toast.success(`Done: ${ok}/${total}`);
+      setConverting(false);
+      onConvertSuccess?.();
+      refreshApiUser().catch(() => {});
+    },
+    [
+      accessToken,
+      apiUser?.reset_at,
+      fmt,
+      isPro,
+      limitReached,
+      onConvertSuccess,
+      processFile,
+      refreshApiUser,
+      t,
+    ],
   );
 
   const handleConfirmPages = useCallback(
@@ -102,17 +178,7 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
       setError(null);
       setConverting(true);
       try {
-        const { blob, filename } = await convertPdfToExcel(
-          accessToken,
-          pending.file,
-          pages ?? undefined,
-        );
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+        await convertAndDownload(accessToken, pending.file, pages ?? undefined);
         onConvertSuccess?.();
         refreshApiUser().catch(() => {});
       } catch (err: unknown) {
@@ -156,8 +222,10 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    const list = e.target.files ? Array.from(e.target.files) : [];
+    if (list.length > 0) {
+      processFiles(list).catch(() => {});
+    }
     e.target.value = "";
   };
 
@@ -178,8 +246,10 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    const list = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    if (list.length > 0) {
+      processFiles(list).catch(() => {});
+    }
   };
 
   const active = isHovered || isDragging;
@@ -208,6 +278,7 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
         filename={pending?.info.filename ?? ""}
         totalPages={pending?.info.total_pages ?? 0}
         canConvertAll={Boolean(pending?.info.can_convert_all)}
+        isProUser={isPro}
         maxSelectPages={pending?.info.max_select_pages ?? 20}
         freeMaxPages={pending?.info.free_max_pages ?? 20}
         labels={{
@@ -239,6 +310,7 @@ export function UploadZone({ onConvertSuccess }: UploadZoneProps) {
       <input
         ref={inputRef}
         type="file"
+        multiple={isPro}
         accept=".pdf,application/pdf"
         className="hidden"
         onChange={handleFileChange}

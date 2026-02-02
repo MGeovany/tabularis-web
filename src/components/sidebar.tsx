@@ -23,7 +23,9 @@ export function Sidebar() {
 
   const used = apiUser?.conversions_used ?? 0;
   const limit = apiUser?.conversions_limit ?? 0;
-  const planLabel = apiUser?.plan === "pro" ? "Pro" : t("sidebar.freeTrial");
+  const plan = (apiUser?.plan || "FREE").toUpperCase();
+  const isPro = plan === "PRO";
+  const planLabel = isPro ? "Pro" : t("sidebar.freeTrial");
   const progressPct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
 
   return (
@@ -44,16 +46,29 @@ export function Sidebar() {
         </div>
         <div className="mb-2 flex justify-between">
           <span>{planLabel}</span>
-          <span>
-            {used}/{limit}
-          </span>
+          <span>{limit > 0 ? `${used}/${limit}` : "∞"}</span>
         </div>
-        <div className="border-ink h-2 w-full border-[1.5px] p-px">
-          <div
-            className="bg-ink h-full [background-image:radial-gradient(var(--ink)_15%,transparent_15%)] [background-size:6px_6px] opacity-100 transition-[width] duration-300"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
+        {limit > 0 ? (
+          <div className="border-ink h-2 w-full border-[1.5px] p-px">
+            <div
+              className="bg-ink h-full [background-image:radial-gradient(var(--ink)_15%,transparent_15%)] [background-size:6px_6px] opacity-100 transition-[width] duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        ) : (
+          <div className="border-ink bg-ink/5 border-[1.5px] px-2 py-1 text-[0.7rem] font-bold uppercase">
+            Unlimited
+          </div>
+        )}
+
+        {isPro && (
+          <a
+            className="border-ink hover:bg-ink hover:text-paper mt-3 inline-flex w-full items-center justify-center border-[1.5px] px-2 py-2 text-[0.75rem] font-bold uppercase transition-colors"
+            href="mailto:marlon.castro@thefndrs.com"
+          >
+            {t("sidebar.askSupport")}
+          </a>
+        )}
       </div>
     </aside>
   );

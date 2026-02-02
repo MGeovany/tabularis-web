@@ -5,6 +5,21 @@ import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { fetchMe, type UserMe } from "@/lib/api";
 
+const DEBUG_PLAN = (process.env.NEXT_PUBLIC_DEBUG_PLAN || "").toUpperCase();
+
+function applyDebugPlan(user: UserMe): UserMe {
+  if (DEBUG_PLAN !== "FREE" && DEBUG_PLAN !== "PRO") return user;
+  const plan = DEBUG_PLAN;
+  const conversions_limit = plan === "PRO" ? 0 : 10;
+  const conversions_used = plan === "PRO" ? 0 : user.conversions_used;
+  return {
+    ...user,
+    plan,
+    conversions_limit,
+    conversions_used,
+  };
+}
+
 type AuthState = {
   user: SupabaseUser | null;
   session: Session | null;
@@ -42,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const apiUser = await fetchMe(session.access_token);
+      const apiUser = applyDebugPlan(await fetchMe(session.access_token));
       setState((s) => ({ ...s, apiUser }));
     } catch {
       setState((s) => ({ ...s, apiUser: null }));
@@ -62,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }));
       if (session?.access_token) {
         try {
-          const apiUser = await fetchMe(session.access_token);
+          const apiUser = applyDebugPlan(await fetchMe(session.access_token));
           setState((s) => ({ ...s, apiUser }));
         } catch {
           setState((s) => ({ ...s, apiUser: null }));
@@ -81,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }));
       if (session?.access_token) {
         fetchMe(session.access_token)
-          .then((apiUser) => setState((s) => ({ ...s, apiUser })))
+          .then((apiUser) => setState((s) => ({ ...s, apiUser: applyDebugPlan(apiUser) })))
           .catch(() => setState((s) => ({ ...s, apiUser: null })));
       }
     });
