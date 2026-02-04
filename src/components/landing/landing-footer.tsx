@@ -14,6 +14,10 @@ export function LandingFooter() {
           <Link href="/terms" className="hover:underline">
             Terms
           </Link>
+          /
+          <Link href="/refund" className="hover:underline">
+            Refunds
+          </Link>
         </span>
         <span className="mt-2 max-w-md font-normal normal-case opacity-90">
           Open source and auditable. Server code on{" "}
